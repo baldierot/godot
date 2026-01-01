@@ -174,6 +174,32 @@
 #include "editor/translations/packed_scene_translation_parser_plugin.h"
 #include "editor/version_control/version_control_editor_plugin.h"
 
+#include "scene/gui/scroll_container.h"
+
+class MobileDockPlugin : public EditorPlugin {
+	GDCLASS(MobileDockPlugin, EditorPlugin);
+
+	Control *dock = nullptr;
+	String name;
+
+public:
+	virtual String get_plugin_name() const override { return name; }
+	virtual bool has_main_screen() const override { return true; }
+	virtual void make_visible(bool p_visible) override {
+		if (dock) {
+			dock->set_visible(p_visible);
+		}
+	}
+	virtual void edit(Object *p_object) override {}
+	virtual bool handles(Object *p_object) const override { return false; }
+
+	MobileDockPlugin(Control *p_dock, const String &p_name) {
+		dock = p_dock;
+		name = p_name;
+	}
+};
+
+
 #ifdef VULKAN_ENABLED
 #include "editor/shader/shader_baker/shader_baker_export_plugin_platform_vulkan.h"
 #endif
@@ -210,6 +236,29 @@ static const String REMOVE_ANDROID_BUILD_TEMPLATE_MESSAGE = TTRC("The Android bu
 static const String INSTALL_ANDROID_BUILD_TEMPLATE_MESSAGE = TTRC("This will set up your project for gradle Android builds by installing the source template to \"%s\".\nNote that in order to make gradle builds instead of using pre-built APKs, the \"Use Gradle Build\" option should be enabled in the Android export preset.");
 
 constexpr int LARGE_RESOURCE_WARNING_SIZE_THRESHOLD = 512'000; // 500 KB
+
+class _EditorNodeMouseFilterPassHelper : public Node {
+	GDCLASS(_EditorNodeMouseFilterPassHelper, Node);
+
+protected:
+	static void _bind_methods() {}
+
+public:
+	void _recursive_set_mouse_filter_pass(Node *p_node) {
+		Control *c = Object::cast_to<Control>(p_node);
+		if (c) {
+			c->set_mouse_filter(Control::MOUSE_FILTER_PASS);
+		}
+
+		if (!p_node->is_connected(SNAME("child_entered_tree"), callable_mp(this, &_EditorNodeMouseFilterPassHelper::_recursive_set_mouse_filter_pass))) {
+			p_node->connect(SNAME("child_entered_tree"), callable_mp(this, &_EditorNodeMouseFilterPassHelper::_recursive_set_mouse_filter_pass));
+		}
+
+		for (int i = 0; i < p_node->get_child_count(); i++) {
+			_recursive_set_mouse_filter_pass(p_node->get_child(i));
+		}
+	}
+};
 
 bool EditorProgress::step(const String &p_state, int p_step, bool p_force_refresh) {
 	if (!force_background && Thread::is_main_thread()) {
@@ -7670,15 +7719,19 @@ void EditorNode::_resource_loaded(Ref<Resource> p_resource, const String &p_path
 }
 
 void EditorNode::_feature_profile_changed() {
+	bool use_tabbed_single_view_layout = EDITOR_GET("interface/editor/tabbed_single_view_layout");
+
 	Ref<EditorFeatureProfile> profile = feature_profile_manager->get_current_profile();
 	if (profile.is_valid()) {
-		editor_dock_manager->set_dock_enabled(SignalsDock::get_singleton(), !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_SIGNALS_DOCK));
-		editor_dock_manager->set_dock_enabled(GroupsDock::get_singleton(), !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_GROUPS_DOCK));
-		// The Import dock is useless without the FileSystem dock. Ensure the configuration is valid.
-		bool fs_dock_disabled = profile->is_feature_disabled(EditorFeatureProfile::FEATURE_FILESYSTEM_DOCK);
-		editor_dock_manager->set_dock_enabled(FileSystemDock::get_singleton(), !fs_dock_disabled);
-		editor_dock_manager->set_dock_enabled(ImportDock::get_singleton(), !fs_dock_disabled && !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_IMPORT_DOCK));
-		editor_dock_manager->set_dock_enabled(history_dock, !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_HISTORY_DOCK));
+		if (!use_tabbed_single_view_layout) {
+			editor_dock_manager->set_dock_enabled(SignalsDock::get_singleton(), !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_SIGNALS_DOCK));
+			editor_dock_manager->set_dock_enabled(GroupsDock::get_singleton(), !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_GROUPS_DOCK));
+			// The Import dock is useless without the FileSystem dock. Ensure the configuration is valid.
+			bool fs_dock_disabled = profile->is_feature_disabled(EditorFeatureProfile::FEATURE_FILESYSTEM_DOCK);
+			editor_dock_manager->set_dock_enabled(FileSystemDock::get_singleton(), !fs_dock_disabled);
+			editor_dock_manager->set_dock_enabled(ImportDock::get_singleton(), !fs_dock_disabled && !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_IMPORT_DOCK));
+			editor_dock_manager->set_dock_enabled(history_dock, !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_HISTORY_DOCK));
+		}
 
 		editor_main_screen->set_button_enabled(EditorMainScreen::EDITOR_3D, !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_3D));
 		editor_main_screen->set_button_enabled(EditorMainScreen::EDITOR_SCRIPT, !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_SCRIPT));
@@ -7689,11 +7742,13 @@ void EditorNode::_feature_profile_changed() {
 			editor_main_screen->set_button_enabled(EditorMainScreen::EDITOR_ASSETLIB, !profile->is_feature_disabled(EditorFeatureProfile::FEATURE_ASSET_LIB));
 		}
 	} else {
-		editor_dock_manager->set_dock_enabled(ImportDock::get_singleton(), true);
-		editor_dock_manager->set_dock_enabled(SignalsDock::get_singleton(), true);
-		editor_dock_manager->set_dock_enabled(GroupsDock::get_singleton(), true);
-		editor_dock_manager->set_dock_enabled(FileSystemDock::get_singleton(), true);
-		editor_dock_manager->set_dock_enabled(history_dock, true);
+		if (!use_tabbed_single_view_layout) {
+			editor_dock_manager->set_dock_enabled(ImportDock::get_singleton(), true);
+			editor_dock_manager->set_dock_enabled(SignalsDock::get_singleton(), true);
+			editor_dock_manager->set_dock_enabled(GroupsDock::get_singleton(), true);
+			editor_dock_manager->set_dock_enabled(FileSystemDock::get_singleton(), true);
+			editor_dock_manager->set_dock_enabled(history_dock, true);
+		}
 		editor_main_screen->set_button_enabled(EditorMainScreen::EDITOR_3D, true);
 		editor_main_screen->set_button_enabled(EditorMainScreen::EDITOR_SCRIPT, true);
 		if (!Engine::get_singleton()->is_recovery_mode_hint()) {
@@ -8005,6 +8060,11 @@ void EditorNode::_add_to_main_menu(const String &p_name, PopupMenu *p_menu) {
 }
 
 void EditorNode::_update_main_menu_type() {
+	Control *top_bar_container = Object::cast_to<Control>(title_bar->get_node_or_null(NodePath("TopBarScroll/TopBarHBox")));
+	if (top_bar_container == nullptr) {
+		top_bar_container = title_bar;
+	}
+
 	bool can_expand = bool(EDITOR_GET("interface/editor/expand_to_title")) && DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_EXTEND_TO_TITLE);
 	bool use_menu_button = EDITOR_GET("interface/editor/collapse_main_menu");
 	bool global_menu = !bool(EDITOR_GET("interface/editor/use_embedded_menu")) && NativeMenu::get_singleton()->has_feature(NativeMenu::FEATURE_GLOBAL_MENU);
@@ -8073,14 +8133,14 @@ void EditorNode::_update_main_menu_type() {
 		// Align main menu icon visually with TouchActionsPanel buttons.
 		menu_btn_spacer = memnew(Control);
 		menu_btn_spacer->set_custom_minimum_size(Vector2(8, 0) * EDSCALE);
-		title_bar->add_child(menu_btn_spacer);
-		title_bar->move_child(menu_btn_spacer, left_menu_spacer ? left_menu_spacer->get_index() + 1 : 0);
+		top_bar_container->add_child(menu_btn_spacer);
+		top_bar_container->move_child(menu_btn_spacer, left_menu_spacer ? left_menu_spacer->get_index() + 1 : 0);
 #endif
-		title_bar->add_child(main_menu_button);
+		top_bar_container->add_child(main_menu_button);
 		if (menu_btn_spacer == nullptr) {
-			title_bar->move_child(main_menu_button, left_menu_spacer ? left_menu_spacer->get_index() + 1 : 0);
+			top_bar_container->move_child(main_menu_button, left_menu_spacer ? left_menu_spacer->get_index() + 1 : 0);
 		} else {
-			title_bar->move_child(main_menu_button, menu_btn_spacer->get_index() + 1);
+			top_bar_container->move_child(main_menu_button, menu_btn_spacer->get_index() + 1);
 		}
 	} else {
 		main_menu_bar = memnew(MenuBar);
@@ -8097,8 +8157,8 @@ void EditorNode::_update_main_menu_type() {
 			}
 		}
 
-		title_bar->add_child(main_menu_bar);
-		title_bar->move_child(main_menu_bar, left_menu_spacer ? left_menu_spacer->get_index() + 1 : 0);
+		top_bar_container->add_child(main_menu_bar);
+		top_bar_container->move_child(main_menu_bar, left_menu_spacer ? left_menu_spacer->get_index() + 1 : 0);
 	}
 
 	// Show/hide project title.
@@ -8508,6 +8568,29 @@ EditorNode::EditorNode() {
 	main_vbox->add_child(title_bar);
 #endif
 
+	bool use_tabbed_single_view_layout = EDITOR_DEF("interface/editor/tabbed_single_view_layout", false);
+	EditorSettings::get_singleton()->set_restart_if_changed("interface/editor/tabbed_single_view_layout", true);
+	Control *top_bar_container = title_bar;
+	if (use_tabbed_single_view_layout) {
+		ScrollContainer *sc = memnew(ScrollContainer);
+		sc->set_name("TopBarScroll");
+		sc->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+		sc->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+		sc->set_horizontal_scroll_mode(ScrollContainer::SCROLL_MODE_AUTO);
+		sc->set_vertical_scroll_mode(ScrollContainer::SCROLL_MODE_DISABLED);
+		sc->set_custom_minimum_size(Size2(0, 35 * EDSCALE));
+		title_bar->add_child(sc);
+		HBoxContainer *top_bar_hbox = memnew(HBoxContainer);
+		top_bar_hbox->set_name("TopBarHBox");
+		top_bar_hbox->set_h_size_flags(Control::SIZE_EXPAND_FILL);
+		top_bar_hbox->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+		sc->add_child(top_bar_hbox);
+		top_bar_container = top_bar_hbox;
+		_EditorNodeMouseFilterPassHelper *helper = memnew(_EditorNodeMouseFilterPassHelper);
+		helper->_recursive_set_mouse_filter_pass(top_bar_container);
+		top_bar_container->add_child(helper);
+	}
+
 	main_hsplit = memnew(DockSplitContainer);
 	main_hsplit->set_name("DockHSplitMain");
 	main_hsplit->set_v_size_flags(Control::SIZE_EXPAND_FILL);
@@ -8795,7 +8878,7 @@ EditorNode::EditorNode() {
 		// Add spacer to avoid other controls under window minimize/maximize/close buttons (left side).
 		left_menu_spacer = memnew(Control);
 		left_menu_spacer->set_mouse_filter(Control::MOUSE_FILTER_PASS);
-		title_bar->add_child(left_menu_spacer);
+		top_bar_container->add_child(left_menu_spacer);
 	}
 
 	file_menu = memnew(PopupMenu);
@@ -8825,7 +8908,7 @@ EditorNode::EditorNode() {
 	left_spacer = memnew(HBoxContainer);
 	left_spacer->set_mouse_filter(Control::MOUSE_FILTER_PASS);
 	left_spacer->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-	title_bar->add_child(left_spacer);
+	top_bar_container->add_child(left_spacer);
 
 	project_title = memnew(Label);
 	project_title->add_theme_font_override(SceneStringName(font), theme->get_font(SNAME("bold"), EditorStringName(EditorFonts)));
@@ -8841,24 +8924,26 @@ EditorNode::EditorNode() {
 	main_editor_button_hb->set_mouse_filter(Control::MOUSE_FILTER_STOP);
 	main_editor_button_hb->set_name("EditorMainScreenButtons");
 	editor_main_screen->set_button_container(main_editor_button_hb);
-	title_bar->add_child(main_editor_button_hb);
-	title_bar->set_center_control(main_editor_button_hb);
+	top_bar_container->add_child(main_editor_button_hb);
+	if (!use_tabbed_single_view_layout) {
+		title_bar->set_center_control(main_editor_button_hb);
+	}
 
 	// Spacer to center 2D / 3D / Script buttons.
 	right_spacer = memnew(Control);
 	right_spacer->set_mouse_filter(Control::MOUSE_FILTER_PASS);
 	right_spacer->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-	title_bar->add_child(right_spacer);
+	top_bar_container->add_child(right_spacer);
 
 	project_run_bar = memnew(EditorRunBar);
 	project_run_bar->set_mouse_filter(Control::MOUSE_FILTER_STOP);
-	title_bar->add_child(project_run_bar);
+	top_bar_container->add_child(project_run_bar);
 	project_run_bar->connect("play_pressed", callable_mp(this, &EditorNode::_project_run_started));
 	project_run_bar->connect("stop_pressed", callable_mp(this, &EditorNode::_project_run_stopped));
 
 	right_menu_hb = memnew(HBoxContainer);
 	right_menu_hb->set_mouse_filter(Control::MOUSE_FILTER_STOP);
-	title_bar->add_child(right_menu_hb);
+	top_bar_container->add_child(right_menu_hb);
 
 	renderer = memnew(OptionButton);
 	renderer->set_visible(true);
@@ -8877,7 +8962,7 @@ EditorNode::EditorNode() {
 		// Add spacer to avoid other controls under the window minimize/maximize/close buttons (right side).
 		right_menu_spacer = memnew(Control);
 		right_menu_spacer->set_mouse_filter(Control::MOUSE_FILTER_PASS);
-		title_bar->add_child(right_menu_spacer);
+		top_bar_container->add_child(right_menu_spacer);
 	}
 
 	const String current_renderer_ps = String(GLOBAL_GET("rendering/renderer/rendering_method")).to_lower();
@@ -8929,30 +9014,72 @@ EditorNode::EditorNode() {
 
 	// Instantiate and place editor docks.
 
-	memnew(SceneTreeDock(scene_root, editor_selection, editor_data));
-	editor_dock_manager->add_dock(SceneTreeDock::get_singleton());
+	SceneTreeDock *scene_dock = memnew(SceneTreeDock(scene_root, editor_selection, editor_data));
+	if (use_tabbed_single_view_layout) {
+		scene_dock->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+		editor_main_screen->add_child(scene_dock);
+		scene_dock->hide();
+	} else {
+		editor_dock_manager->add_dock(scene_dock);
+	}
 
-	memnew(ImportDock);
-	editor_dock_manager->add_dock(ImportDock::get_singleton());
+	ImportDock *import_dock = memnew(ImportDock);
+	if (use_tabbed_single_view_layout) {
+		import_dock->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+		editor_main_screen->add_child(import_dock);
+		import_dock->hide();
+	} else {
+		editor_dock_manager->add_dock(import_dock);
+	}
 
 	FileSystemDock *filesystem_dock = memnew(FileSystemDock);
 	filesystem_dock->connect("inherit", callable_mp(this, &EditorNode::_inherit_request));
 	filesystem_dock->connect("instantiate", callable_mp(this, &EditorNode::_instantiate_request));
 	filesystem_dock->connect("display_mode_changed", callable_mp(this, &EditorNode::_save_editor_layout));
 	get_project_settings()->connect_filesystem_dock_signals(filesystem_dock);
-	editor_dock_manager->add_dock(filesystem_dock);
+	if (use_tabbed_single_view_layout) {
+		filesystem_dock->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+		editor_main_screen->add_child(filesystem_dock);
+		filesystem_dock->hide();
+	} else {
+		editor_dock_manager->add_dock(filesystem_dock);
+	}
 
-	memnew(InspectorDock(editor_data));
-	editor_dock_manager->add_dock(InspectorDock::get_singleton());
+	InspectorDock *inspector_dock = memnew(InspectorDock(editor_data));
+	if (use_tabbed_single_view_layout) {
+		inspector_dock->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+		editor_main_screen->add_child(inspector_dock);
+		inspector_dock->hide();
+	} else {
+		editor_dock_manager->add_dock(inspector_dock);
+	}
 
-	memnew(SignalsDock);
-	editor_dock_manager->add_dock(SignalsDock::get_singleton());
+	SignalsDock *signals_dock = memnew(SignalsDock);
+	if (use_tabbed_single_view_layout) {
+		signals_dock->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+		editor_main_screen->add_child(signals_dock);
+		signals_dock->hide();
+	} else {
+		editor_dock_manager->add_dock(signals_dock);
+	}
 
-	memnew(GroupsDock);
-	editor_dock_manager->add_dock(GroupsDock::get_singleton());
+	GroupsDock *groups_dock = memnew(GroupsDock);
+	if (use_tabbed_single_view_layout) {
+		groups_dock->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+		editor_main_screen->add_child(groups_dock);
+		groups_dock->hide();
+	} else {
+		editor_dock_manager->add_dock(groups_dock);
+	}
 
 	history_dock = memnew(HistoryDock);
-	editor_dock_manager->add_dock(history_dock);
+	if (use_tabbed_single_view_layout) {
+		history_dock->set_v_size_flags(Control::SIZE_EXPAND_FILL);
+		editor_main_screen->add_child(history_dock);
+		history_dock->hide();
+	} else {
+		editor_dock_manager->add_dock(history_dock);
+	}
 
 	// Add some offsets to make LEFT_R and RIGHT_L docks wider than minsize.
 	const int dock_hsize = 280;
@@ -9143,6 +9270,17 @@ EditorNode::EditorNode() {
 	if (!Engine::get_singleton()->is_recovery_mode_hint()) {
 		add_editor_plugin(get_game_view_plugin());
 	}
+
+	if (use_tabbed_single_view_layout) {
+		add_editor_plugin(memnew(MobileDockPlugin(scene_dock, TTRC("Scene"))));
+		add_editor_plugin(memnew(MobileDockPlugin(import_dock, TTRC("Import"))));
+		add_editor_plugin(memnew(MobileDockPlugin(filesystem_dock, TTRC("FileSystem"))));
+		add_editor_plugin(memnew(MobileDockPlugin(inspector_dock, TTRC("Inspector"))));
+		add_editor_plugin(memnew(MobileDockPlugin(signals_dock, TTRC("Signals"))));
+		add_editor_plugin(memnew(MobileDockPlugin(groups_dock, TTRC("Groups"))));
+		add_editor_plugin(memnew(MobileDockPlugin(history_dock, TTRC("History"))));
+	}
+
 
 	EditorAudioBuses *audio_bus_editor = EditorAudioBuses::register_editor();
 
