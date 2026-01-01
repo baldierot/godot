@@ -53,7 +53,7 @@
             android:exported="false"
             android:icon="@mipmap/themed_icon"
             android:launchMode="singleTask"
-            android:screenOrientation="userLandscape">
+            android:screenOrientation="fullUser">
             <layout
                 android:defaultWidth="@dimen/editor_default_window_width"
                 android:defaultHeight="@dimen/editor_default_window_height" />
@@ -97,7 +97,7 @@
             android:autoRemoveFromRecents="true"
             android:theme="@style/GodotGameTheme"
             android:supportsPictureInPicture="true"
-            android:screenOrientation="userLandscape">
+            android:screenOrientation="fullUser">
             <layout
                 android:defaultWidth="@dimen/editor_default_window_width"
                 android:defaultHeight="@dimen/editor_default_window_height" />
@@ -124,7 +124,7 @@
             android:label="@string/godot_game_activity_name"
             android:exported="false"
             android:autoRemoveFromRecents="true"
-            android:screenOrientation="landscape"
+            android:screenOrientation="fullUser"
             android:resizeableActivity="false"
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
 
