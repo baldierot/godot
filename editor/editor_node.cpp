@@ -181,6 +181,7 @@ class MobileDockPlugin : public EditorPlugin {
 
 	Control *dock = nullptr;
 	String name;
+	Ref<Texture2D> icon;
 
 public:
 	virtual String get_plugin_name() const override { return name; }
@@ -192,10 +193,13 @@ public:
 	}
 	virtual void edit(Object *p_object) override {}
 	virtual bool handles(Object *p_object) const override { return false; }
+	
+	virtual const Ref<Texture2D> get_plugin_icon() const override { return icon; } 
 
-	MobileDockPlugin(Control *p_dock, const String &p_name) {
+	MobileDockPlugin(Control *p_dock, const String &p_name, const Ref<Texture2D> &p_icon) {
 		dock = p_dock;
 		name = p_name;
+		icon = p_icon;
 	}
 };
 
@@ -9204,13 +9208,13 @@ EditorNode::EditorNode() {
 	}
 
 	if (use_tabbed_single_view_layout) {
-		add_editor_plugin(memnew(MobileDockPlugin(scene_dock, TTRC("Scene"))));
-		add_editor_plugin(memnew(MobileDockPlugin(import_dock, TTRC("Import"))));
-		add_editor_plugin(memnew(MobileDockPlugin(filesystem_dock, TTRC("FileSystem"))));
-		add_editor_plugin(memnew(MobileDockPlugin(inspector_dock, TTRC("Inspector"))));
-		add_editor_plugin(memnew(MobileDockPlugin(signals_dock, TTRC("Signals"))));
-		add_editor_plugin(memnew(MobileDockPlugin(groups_dock, TTRC("Groups"))));
-		add_editor_plugin(memnew(MobileDockPlugin(history_dock, TTRC("History"))));
+		add_editor_plugin(memnew(MobileDockPlugin(scene_dock, TTRC("Scene"), theme->get_icon(SNAME("PackedScene"), EditorStringName(EditorIcons)))));
+		add_editor_plugin(memnew(MobileDockPlugin(import_dock, TTRC("Import"), theme->get_icon(SNAME("ArrowDown"), EditorStringName(EditorIcons)))));
+		add_editor_plugin(memnew(MobileDockPlugin(filesystem_dock, TTRC("FileSystem"), theme->get_icon(SNAME("Filesystem"), EditorStringName(EditorIcons)))));
+		add_editor_plugin(memnew(MobileDockPlugin(inspector_dock, TTRC("Inspector"), theme->get_icon(SNAME("Search"), EditorStringName(EditorIcons)))));
+		add_editor_plugin(memnew(MobileDockPlugin(signals_dock, TTRC("Signals"), theme->get_icon(SNAME("Signals"), EditorStringName(EditorIcons)))));
+		add_editor_plugin(memnew(MobileDockPlugin(groups_dock, TTRC("Groups"), theme->get_icon(SNAME("Groups"), EditorStringName(EditorIcons)))));
+		add_editor_plugin(memnew(MobileDockPlugin(history_dock, TTRC("History"), theme->get_icon(SNAME("History"), EditorStringName(EditorIcons)))));
 	}
 
 
