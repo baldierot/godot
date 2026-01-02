@@ -8352,12 +8352,14 @@ EditorNode::EditorNode() {
 	}
 
 	// Define a minimum window size to prevent UI elements from overlapping or being cut off.
-	Window *w = Object::cast_to<Window>(SceneTree::get_singleton()->get_root());
-	if (w) {
-		const Size2 minimum_size = Size2(1024, 600) * EDSCALE;
-		w->set_min_size(minimum_size); // Calling it this early doesn't sync the property with DS.
-		DisplayServer::get_singleton()->window_set_min_size(minimum_size);
-	}
+	#if !defined(ANDROID_ENABLED) && !defined(IOS_ENABLED) // Prevent overflow when the editor loads in portrait mode and use_tabbed_single_view_layout. 
+		Window *w = Object::cast_to<Window>(SceneTree::get_singleton()->get_root());
+		if (w) {
+			const Size2 minimum_size = Size2(1024, 600) * EDSCALE;
+			w->set_min_size(minimum_size); // Calling it this early doesn't sync the property with DS.
+			DisplayServer::get_singleton()->window_set_min_size(minimum_size);
+		}
+	#endif
 
 	FileDialog::set_default_show_hidden_files(EDITOR_GET("filesystem/file_dialog/show_hidden_files"));
 	FileDialog::set_default_display_mode(EDITOR_GET("filesystem/file_dialog/display_mode"));
@@ -8703,7 +8705,15 @@ EditorNode::EditorNode() {
 	distraction_free->set_shortcut(ED_GET_SHORTCUT("editor/distraction_free_mode"));
 	distraction_free->set_tooltip_text(TTRC("Toggle distraction-free mode."));
 	distraction_free->set_toggle_mode(true);
-	scene_tabs->add_extra_button(distraction_free);
+
+	if (use_tabbed_single_view_layout) {
+		// Create the button to keep pointers valid, but hide it and parent to gui_base for memory cleanup.
+		gui_base->add_child(distraction_free);
+		distraction_free->hide();
+	} else {
+		scene_tabs->add_extra_button(distraction_free);
+	}
+
 	distraction_free->connect(SceneStringName(pressed), callable_mp(this, &EditorNode::_toggle_distraction_free_mode));
 
 	editor_main_screen = memnew(EditorMainScreen);

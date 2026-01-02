@@ -168,12 +168,10 @@ void ProjectManager::_build_icon_type_cache(Ref<Theme> p_theme) {
 	}
 }
 
-// Main layout.
-
 void ProjectManager::_update_size_limits() {
-	const Size2 minimum_size = Size2(720, 450) * EDSCALE;
+	const Size2 minimum_size = Size2(540, 450) * EDSCALE;
 
-	// Define a minimum window size to prevent UI elements from overlapping or being cut off.
+	// Define a minimum window size to prevent UI elements from overlapping or being cut off. 
 	Window *w = Object::cast_to<Window>(SceneTree::get_singleton()->get_root());
 	if (w) {
 		// Calling Window methods this early doesn't sync properties with DS.
@@ -1581,7 +1579,7 @@ ProjectManager::ProjectManager() {
 			project_list_hbox->add_child(project_list_panel);
 
 			project_list = memnew(ProjectList);
-			project_list->set_horizontal_scroll_mode(ScrollContainer::SCROLL_MODE_DISABLED);
+			project_list->set_horizontal_scroll_mode(ScrollContainer::SCROLL_MODE_AUTO);
 			project_list_panel->add_child(project_list);
 			project_list->connect(ProjectList::SIGNAL_LIST_CHANGED, callable_mp(this, &ProjectManager::_update_project_buttons));
 			project_list->connect(ProjectList::SIGNAL_LIST_CHANGED, callable_mp(this, &ProjectManager::_update_list_placeholder));

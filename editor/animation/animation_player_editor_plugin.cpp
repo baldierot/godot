@@ -48,11 +48,13 @@
 #include "editor/themes/editor_scale.h"
 #include "editor/themes/editor_theme_manager.h"
 #include "scene/animation/animation_tree.h"
+#include "scene/gui/flow_container.h"
 #include "scene/gui/separator.h"
 #include "scene/main/window.h"
 #include "scene/resources/animation.h"
 #include "scene/resources/image_texture.h"
 #include "servers/rendering/rendering_server.h"
+
 
 ///////////////////////////////////
 
@@ -2064,12 +2066,12 @@ AnimationPlayerEditor::AnimationPlayerEditor(AnimationPlayerEditorPlugin *p_plug
 
 	VBoxContainer *main_vbox_container = memnew(VBoxContainer);
 	add_child(main_vbox_container);
-	HBoxContainer *hb = memnew(HBoxContainer);
-	main_vbox_container->add_child(hb);
+	HFlowContainer *hf = memnew(HFlowContainer);
+	main_vbox_container->add_child(hf);
 
 	HBoxContainer *playback_container = memnew(HBoxContainer);
 	playback_container->set_layout_direction(LAYOUT_DIRECTION_LTR);
-	hb->add_child(playback_container);
+	hf->add_child(playback_container);
 
 	play_bw_from = memnew(Button);
 	play_bw_from->set_theme_type_variation(SceneStringName(FlatButton));
@@ -2092,16 +2094,16 @@ AnimationPlayerEditor::AnimationPlayerEditor(AnimationPlayerEditorPlugin *p_plug
 	playback_container->add_child(play_from);
 
 	frame = memnew(SpinBox);
-	hb->add_child(frame);
+	hf->add_child(frame);
 	frame->set_custom_minimum_size(Size2(80, 0) * EDSCALE);
 	frame->set_stretch_ratio(2);
 	frame->set_step(0.0001);
 	frame->set_tooltip_text(TTR("Animation position (in seconds)."));
 
-	hb->add_child(memnew(VSeparator));
+	hf->add_child(memnew(VSeparator));
 
 	scale = memnew(LineEdit);
-	hb->add_child(scale);
+	hf->add_child(scale);
 	scale->set_h_size_flags(SIZE_EXPAND_FILL);
 	scale->set_stretch_ratio(1);
 	scale->set_tooltip_text(TTR("Scale animation playback globally for the node."));
@@ -2129,10 +2131,10 @@ AnimationPlayerEditor::AnimationPlayerEditor(AnimationPlayerEditorPlugin *p_plug
 	tool_anim->get_popup()->add_shortcut(ED_SHORTCUT("animation_player_editor/remove_animation", TTRC("Remove")), TOOL_REMOVE_ANIM);
 	tool_anim->set_disabled(true);
 	tool_anim->get_popup()->connect(SceneStringName(id_pressed), callable_mp(this, &AnimationPlayerEditor::_animation_tool_menu));
-	hb->add_child(tool_anim);
+	hf->add_child(tool_anim);
 
 	animation = memnew(OptionButton);
-	hb->add_child(animation);
+	hf->add_child(animation);
 	animation->set_accessibility_name(TTRC("Animation"));
 	animation->set_h_size_flags(SIZE_EXPAND_FILL);
 	animation->set_tooltip_text(TTR("Display list of animations in player."));
@@ -2141,22 +2143,22 @@ AnimationPlayerEditor::AnimationPlayerEditor(AnimationPlayerEditorPlugin *p_plug
 
 	autoplay = memnew(Button);
 	autoplay->set_theme_type_variation(SceneStringName(FlatButton));
-	hb->add_child(autoplay);
+	hf->add_child(autoplay);
 	autoplay->set_tooltip_text(TTR("Autoplay on Load"));
 
-	hb->add_child(memnew(VSeparator));
+	hf->add_child(memnew(VSeparator));
 
 	track_editor = memnew(AnimationTrackEditor);
-	hb->add_child(track_editor->get_edit_menu());
+	hf->add_child(track_editor->get_edit_menu());
 
-	hb->add_child(memnew(VSeparator));
+	hf->add_child(memnew(VSeparator));
 
 	onion_toggle = memnew(Button);
 	onion_toggle->set_theme_type_variation(SceneStringName(FlatButton));
 	onion_toggle->set_toggle_mode(true);
 	onion_toggle->set_tooltip_text(TTR("Enable Onion Skinning"));
 	onion_toggle->connect(SceneStringName(pressed), callable_mp(this, &AnimationPlayerEditor::_onion_skinning_menu).bind(ONION_SKINNING_ENABLE));
-	hb->add_child(onion_toggle);
+	hf->add_child(onion_toggle);
 
 	onion_skinning = memnew(MenuButton);
 	onion_skinning->set_accessibility_name(TTRC("Onion Skinning Options"));
@@ -2179,15 +2181,15 @@ AnimationPlayerEditor::AnimationPlayerEditor(AnimationPlayerEditorPlugin *p_plug
 	onion_skinning->get_popup()->add_check_item(TTR("Force White Modulate"), ONION_SKINNING_FORCE_WHITE_MODULATE);
 	onion_skinning->get_popup()->add_check_item(TTR("Include Gizmos (3D)"), ONION_SKINNING_INCLUDE_GIZMOS);
 	onion_skinning->get_popup()->connect(SceneStringName(id_pressed), callable_mp(this, &AnimationPlayerEditor::_onion_skinning_menu));
-	hb->add_child(onion_skinning);
+	hf->add_child(onion_skinning);
 
-	hb->add_child(memnew(VSeparator));
+	hf->add_child(memnew(VSeparator));
 
 	pin = memnew(Button);
 	pin->set_theme_type_variation(SceneStringName(FlatButton));
 	pin->set_toggle_mode(true);
 	pin->set_tooltip_text(TTR("Pin AnimationPlayer"));
-	hb->add_child(pin);
+	hf->add_child(pin);
 	pin->connect(SceneStringName(pressed), callable_mp(this, &AnimationPlayerEditor::_pin_pressed));
 
 	file = memnew(EditorFileDialog);

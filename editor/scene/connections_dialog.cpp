@@ -752,7 +752,7 @@ void ConnectDialog::_advanced_pressed() {
 
 	EditorSettings::get_singleton()->set_project_metadata("editor_metadata", "use_advanced_connections", advanced->is_pressed());
 
-	popup_centered();
+	// popup_centered();
 }
 
 ConnectDialog::ConnectDialog() {
@@ -764,7 +764,7 @@ ConnectDialog::ConnectDialog() {
 	VBoxContainer *vbc_left = memnew(VBoxContainer);
 	main_hb->add_child(vbc_left);
 	vbc_left->set_h_size_flags(Control::SIZE_EXPAND_FILL);
-	vbc_left->set_custom_minimum_size(Vector2(400 * EDSCALE, 0));
+	// vbc_left->set_custom_minimum_size(Vector2(400 * EDSCALE, 0));
 
 	from_signal = memnew(LineEdit);
 	from_signal->set_accessibility_name(TTRC("From Signal:"));

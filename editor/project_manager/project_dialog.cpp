@@ -1174,6 +1174,7 @@ ProjectDialog::ProjectDialog() {
 	renderer_info->set_auto_translate_mode(AUTO_TRANSLATE_MODE_DISABLED);
 	renderer_info->set_focus_mode(Control::FOCUS_ACCESSIBILITY);
 	renderer_info->set_modulate(Color(1, 1, 1, 0.7));
+	renderer_info->set_clip_text(true);
 	rvb->add_child(renderer_info);
 
 	rd_not_supported = memnew(Label);
