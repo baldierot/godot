@@ -1807,6 +1807,16 @@ void ScriptEditor::_notification(int p_what) {
 			[[fallthrough]];
 		}
 
+		case NOTIFICATION_RESIZED: {
+			Window *parent_window = get_window();
+			if (parent_window) {
+				const bool is_narrow = parent_window->get_size().width < 640 * EDSCALE;
+				help_search->set_text(is_narrow ? TTRC("Help") : TTRC("Search Help"));
+				site_search->set_visible(!is_narrow);
+				script_name_label->set_visible(!is_narrow);
+			}
+		} break;
+
 		case NOTIFICATION_TRANSLATION_CHANGED: {
 			_update_online_doc();
 			if (!make_floating->is_disabled()) {

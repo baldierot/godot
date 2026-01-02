@@ -2132,55 +2132,57 @@ SpriteFramesEditor::SpriteFramesEditor() {
 
 	VBoxContainer *vbc_animlist = memnew(VBoxContainer);
 	main_split->add_child(vbc_animlist);
-	vbc_animlist->set_custom_minimum_size(Size2(150 * EDSCALE, 0));
+	#if !defined(ANDROID_ENABLED) && !defined(IOS_ENABLED)
+		vbc_animlist->set_custom_minimum_size(Size2(150 * EDSCALE, 0));
+	#endif
 
 	VBoxContainer *sub_vb = memnew(VBoxContainer);
 	vbc_animlist->add_margin_child(TTRC("Animations:"), sub_vb, true);
 	sub_vb->set_v_size_flags(SIZE_EXPAND_FILL);
 
-	HBoxContainer *hbc_animlist = memnew(HBoxContainer);
-	sub_vb->add_child(hbc_animlist);
+	HFlowContainer *hfc_animlist = memnew(HFlowContainer);
+	sub_vb->add_child(hfc_animlist);
 
 	add_anim = memnew(Button);
 	add_anim->set_theme_type_variation(SceneStringName(FlatButton));
 	add_anim->set_accessibility_name(TTRC("Add Animation"));
-	hbc_animlist->add_child(add_anim);
+	hfc_animlist->add_child(add_anim);
 	add_anim->connect(SceneStringName(pressed), callable_mp(this, &SpriteFramesEditor::_animation_add));
 
 	duplicate_anim = memnew(Button);
 	duplicate_anim->set_theme_type_variation(SceneStringName(FlatButton));
 	duplicate_anim->set_accessibility_name(TTRC("Duplicate Animation"));
-	hbc_animlist->add_child(duplicate_anim);
+	hfc_animlist->add_child(duplicate_anim);
 	duplicate_anim->connect(SceneStringName(pressed), callable_mp(this, &SpriteFramesEditor::_animation_duplicate));
 	duplicate_anim->set_visible(false);
 
 	cut_anim = memnew(Button);
 	cut_anim->set_theme_type_variation(SceneStringName(FlatButton));
 	cut_anim->set_accessibility_name(TTRC("Cut Animation"));
-	hbc_animlist->add_child(cut_anim);
+	hfc_animlist->add_child(cut_anim);
 	cut_anim->connect(SceneStringName(pressed), callable_mp(this, &SpriteFramesEditor::_animation_cut));
 
 	copy_anim = memnew(Button);
 	copy_anim->set_theme_type_variation(SceneStringName(FlatButton));
 	copy_anim->set_accessibility_name(TTRC("Copy Animation"));
-	hbc_animlist->add_child(copy_anim);
+	hfc_animlist->add_child(copy_anim);
 	copy_anim->connect(SceneStringName(pressed), callable_mp(this, &SpriteFramesEditor::_animation_copy));
 
 	paste_anim = memnew(Button);
 	paste_anim->set_theme_type_variation(SceneStringName(FlatButton));
 	paste_anim->set_accessibility_name(TTRC("Paste Animation"));
-	hbc_animlist->add_child(paste_anim);
+	hfc_animlist->add_child(paste_anim);
 	paste_anim->connect(SceneStringName(pressed), callable_mp(this, &SpriteFramesEditor::_animation_paste));
 
 	delete_anim = memnew(Button);
 	delete_anim->set_theme_type_variation(SceneStringName(FlatButton));
 	delete_anim->set_accessibility_name(TTRC("Delete Animation"));
-	hbc_animlist->add_child(delete_anim);
+	hfc_animlist->add_child(delete_anim);
 	delete_anim->set_disabled(true);
 	delete_anim->connect(SceneStringName(pressed), callable_mp(this, &SpriteFramesEditor::_animation_remove));
 
 	autoplay_container = memnew(HBoxContainer);
-	hbc_animlist->add_child(autoplay_container);
+	hfc_animlist->add_child(autoplay_container);
 
 	autoplay_container->add_child(memnew(VSeparator));
 
@@ -2189,14 +2191,14 @@ SpriteFramesEditor::SpriteFramesEditor() {
 	autoplay->set_tooltip_text(TTRC("Autoplay on Load"));
 	autoplay_container->add_child(autoplay);
 
-	hbc_animlist->add_child(memnew(VSeparator));
+	hfc_animlist->add_child(memnew(VSeparator));
 
 	anim_loop = memnew(Button);
 	anim_loop->set_toggle_mode(true);
 	anim_loop->set_theme_type_variation(SceneStringName(FlatButton));
 	anim_loop->set_tooltip_text(TTRC("Animation Looping"));
 	anim_loop->connect(SceneStringName(pressed), callable_mp(this, &SpriteFramesEditor::_animation_loop_changed));
-	hbc_animlist->add_child(anim_loop);
+	hfc_animlist->add_child(anim_loop);
 
 	anim_speed = memnew(SpinBox);
 	anim_speed->set_suffix(TTR("FPS"));
@@ -2208,7 +2210,7 @@ SpriteFramesEditor::SpriteFramesEditor() {
 	anim_speed->get_line_edit()->set_expand_to_text_length_enabled(true);
 	anim_speed->get_line_edit()->connect(SceneStringName(resized), callable_mp(this, &SpriteFramesEditor::_animation_speed_resized));
 	anim_speed->connect(SceneStringName(value_changed), callable_mp(this, &SpriteFramesEditor::_animation_speed_changed));
-	hbc_animlist->add_child(anim_speed);
+	hfc_animlist->add_child(anim_speed);
 
 	anim_search_box = memnew(LineEdit);
 	sub_vb->add_child(anim_search_box);

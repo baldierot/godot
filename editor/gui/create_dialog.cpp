@@ -593,6 +593,19 @@ void CreateDialog::select_type(const String &p_type, bool p_center_on_item) {
 
 	help_bit->parse_symbol("class|" + p_type + "|");
 
+	// hack: Reset min width of EditorHelpBit children (RichTextLabel with 640px width minimum) to allow narrowing.
+	auto reset_width = [&](auto &&self, Node *p_node) -> void {
+		Control *c = Object::cast_to<Control>(p_node);
+		if (c) {
+			Size2 min = c->get_custom_minimum_size();
+			c->set_custom_minimum_size(Size2(0, min.y));
+		}
+		for (int i = 0; i < p_node->get_child_count(); i++) {
+			self(self, p_node->get_child(i));
+		}
+	};
+	reset_width(reset_width, help_bit);
+
 	favorite->set_disabled(false);
 	favorite->set_pressed(favorite_list.has(p_type));
 
