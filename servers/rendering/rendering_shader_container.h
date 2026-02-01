@@ -33,9 +33,11 @@
 #include "core/object/ref_counted.h"
 #include "servers/rendering/rendering_device_commons.h"
 
+#ifdef RD_ENABLED
 struct SpvReflectShaderModule;
 struct SpvReflectDescriptorBinding;
 struct SpvReflectSpecializationConstant;
+#endif
 
 class RenderingShaderContainer : public RefCounted {
 	GDSOFTCLASS(RenderingShaderContainer, RefCounted);
@@ -166,6 +168,7 @@ protected:
 		RDC::DataFormat format = RDC::DATA_FORMAT_MAX;
 	};
 
+#ifdef RD_ENABLED
 	struct ReflectUniform : ReflectSymbol<SpvReflectDescriptorBinding> {
 		RDC::UniformType type = RDC::UniformType::UNIFORM_TYPE_MAX;
 		uint32_t binding = 0;
@@ -206,16 +209,21 @@ protected:
 
 		bool operator<(const ReflectSpecializationConstant &p_other) const { return constant_id < p_other.constant_id; }
 	};
+#endif
 
 	class ReflectShaderStage {
 		friend class RenderingShaderContainer;
 
 		Vector<uint8_t> _spirv_data;
+#ifdef RD_ENABLED
 		SpvReflectShaderModule *_module = nullptr;
+#endif
 
 	public:
 		RDC::ShaderStage shader_stage = RDC::SHADER_STAGE_MAX;
+#ifdef RD_ENABLED
 		const SpvReflectShaderModule &module() const;
+#endif
 		const Span<uint32_t> spirv() const;
 		const Vector<uint8_t> spirv_data() const { return _spirv_data; }
 
@@ -223,6 +231,7 @@ protected:
 		~ReflectShaderStage();
 	};
 
+#ifdef RD_ENABLED
 	typedef LocalVector<ReflectUniform> ReflectDescriptorSet;
 
 	struct ReflectShader {
@@ -277,6 +286,7 @@ protected:
 
 	void set_from_shader_reflection(const ReflectShader &p_reflection);
 	Error reflect_spirv(const String &p_shader_name, Span<RDC::ShaderStageSPIRVData> p_spirv, ReflectShader &r_shader);
+#endif
 
 public:
 	enum CompressionFlags {
@@ -293,7 +303,9 @@ public:
 	CharString shader_name;
 	Vector<Shader> shaders;
 
+#ifdef RD_ENABLED
 	bool set_code_from_spirv(const String &p_shader_name, Span<RDC::ShaderStageSPIRVData> p_spirv);
+#endif
 	RDC::ShaderReflection get_shader_reflection() const;
 	bool from_bytes(const PackedByteArray &p_bytes);
 	PackedByteArray to_bytes() const;

@@ -681,6 +681,7 @@ void ShaderPreprocessor::process_ifndef(Tokenizer *p_tokenizer) {
 void ShaderPreprocessor::process_include(Tokenizer *p_tokenizer) {
 	const int line = p_tokenizer->get_line();
 
+#ifdef TOOLS_ENABLED
 	p_tokenizer->advance('"');
 	String path = tokens_to_string(p_tokenizer->advance('"'));
 	for (int i = 0; i < path.length(); i++) {
@@ -777,6 +778,9 @@ void ShaderPreprocessor::process_include(Tokenizer *p_tokenizer) {
 
 	state->include_depth--;
 	state->condition_depth = prev_condition_depth;
+#else
+	set_error(RTR("Includes are not available in this build."), line);
+#endif
 }
 
 void ShaderPreprocessor::process_pragma(Tokenizer *p_tokenizer) {

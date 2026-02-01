@@ -240,19 +240,25 @@ void register_server_types() {
 
 	GDREGISTER_ABSTRACT_CLASS(RenderData);
 	GDREGISTER_CLASS(RenderDataExtension);
+#ifdef RD_ENABLED
 	GDREGISTER_CLASS(RenderDataRD);
+#endif
 
 	GDREGISTER_ABSTRACT_CLASS(RenderSceneData);
 	GDREGISTER_CLASS(RenderSceneDataExtension);
+#ifdef RD_ENABLED
 	GDREGISTER_CLASS(RenderSceneDataRD);
+#endif
 
 	GDREGISTER_CLASS(RenderSceneBuffersConfiguration);
 	GDREGISTER_ABSTRACT_CLASS(RenderSceneBuffers);
 	GDREGISTER_CLASS(RenderSceneBuffersExtension);
+#ifdef RD_ENABLED
 	GDREGISTER_CLASS(RenderSceneBuffersRD);
 
 	GDREGISTER_CLASS(FramebufferCacheRD);
 	GDREGISTER_CLASS(UniformSetCacheRD);
+#endif
 
 	GDREGISTER_CLASS(CameraFeed);
 

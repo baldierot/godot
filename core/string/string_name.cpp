@@ -35,7 +35,7 @@
 #include "core/string/print_string.h"
 
 struct StringName::Table {
-	constexpr static uint32_t TABLE_BITS = 16;
+	constexpr static uint32_t TABLE_BITS = 12;
 	constexpr static uint32_t TABLE_LEN = 1 << TABLE_BITS;
 	constexpr static uint32_t TABLE_MASK = TABLE_LEN - 1;
 

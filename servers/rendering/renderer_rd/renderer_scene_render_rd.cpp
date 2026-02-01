@@ -471,9 +471,12 @@ void RendererSceneRenderRD::_render_buffers_post_process_and_tonemap(const Rende
 	bool use_upscaled_texture = rb->has_upscaled_texture() && (scale_mode == RS::VIEWPORT_SCALING_3D_MODE_FSR2 || scale_mode == RS::VIEWPORT_SCALING_3D_MODE_METALFX_TEMPORAL);
 	SpatialUpscaler *spatial_upscaler = nullptr;
 	if (can_use_effects) {
+#ifdef GLES3_USES_FSR
 		if (scale_mode == RS::VIEWPORT_SCALING_3D_MODE_FSR) {
 			spatial_upscaler = fsr;
-		} else if (scale_mode == RS::VIEWPORT_SCALING_3D_MODE_METALFX_SPATIAL) {
+		} else
+#endif
+		if (scale_mode == RS::VIEWPORT_SCALING_3D_MODE_METALFX_SPATIAL) {
 #if METAL_ENABLED
 			spatial_upscaler = mfx_spatial;
 #endif
@@ -1755,9 +1758,11 @@ void RendererSceneRenderRD::init() {
 	if (can_use_vrs) {
 		vrs = memnew(RendererRD::VRS);
 	}
+#ifdef GLES3_USES_FSR
 	if (can_use_storage) {
 		fsr = memnew(RendererRD::FSR);
 	}
+#endif
 #ifdef METAL_ENABLED
 	mfx_spatial = memnew(RendererRD::MFXSpatialEffect);
 #endif
@@ -1790,9 +1795,11 @@ RendererSceneRenderRD::~RendererSceneRenderRD() {
 	if (vrs) {
 		memdelete(vrs);
 	}
+#ifdef GLES3_USES_FSR
 	if (fsr) {
 		memdelete(fsr);
 	}
+#endif
 #ifdef METAL_ENABLED
 	if (mfx_spatial) {
 		memdelete(mfx_spatial);

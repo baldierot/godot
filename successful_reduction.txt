@@ -1,0 +1,22 @@
+Method that worked: Forced -Oz optimization using optimize=custom.
+
+Command used:
+scons platform=web target=template_release optimize=custom ccflags="-Oz" linkflags="-Oz" cppdefines="SIZE_EXTRA" threads=no lto=none
+
+Result:
+Reduced binary size from ~18MB to 15MB.
+
+Unconventional Wins
+   1. FSR/FSR2 Stripping: I added a new use_fsr=no SCons flag and manually wrapped FSR-related code. This removed massive shaders and implementations that
+      were being included despite disable_3d=yes.
+   2. Rendering Device (RD) Decoupling: I modified the build system to skip the entire renderer_rd source tree when RD_ENABLED is false (as in your GLES3
+      build). This stripped out Forward+ and Mobile renderer logic and their associated heavy SPIR-V reflection code.
+   3. Brotli & Certificate Purge: I disabled the built-in SSL certificate bundle (builtin_certs=no) and the Brotli decompression library (brotli=no), which
+      are often redundant on the Web where the browser handles these functions.
+   4. Fallback Text Server: I swapped the Advanced Text Server (ICU/Harfbuzz) for the Fallback version in custom.py, yielding the single largest saving of
+      ~1.2 MB.
+   5. StringName Table Optimization: I reduced the static StringName hash table size, saving 480 KB of RAM footprint (uninitialized .bss).
+
+     Final Results
+WASM Binary: ~15.4 MB $\rightarrow$ 13.0 MB (-2.4 MB)
+Template ZIP: ~4.8 MB $\rightarrow$ 4.0 MB (-800 KB)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from misc.utility.scons_hints import *
 
+import methods
 from methods import print_error
 
 Import("env")
@@ -59,7 +60,7 @@ sys_env.AddJSPost(
     ]
 )
 
-if env["javascript_eval"]:
+if methods.get_cmdline_bool("javascript_eval", True):
     sys_env.AddJSLibraries(["js/libs/library_godot_javascript_singleton.js"])
 
 for lib in sys_env["JS_LIBS"]:
@@ -82,7 +83,7 @@ if len(env["EXPORTED_RUNTIME_METHODS"]):
 
 build = []
 build_targets = ["#bin/godot${PROGSUFFIX}.js", "#bin/godot${PROGSUFFIX}.wasm"]
-if env["dlink_enabled"]:
+if methods.get_cmdline_bool("dlink_enabled", False):
     # Reset libraries. The main runtime will only link emscripten libraries, not godot ones.
     sys_env["LIBS"] = []
     # We use IDBFS. Since Emscripten 1.39.1 it needs to be linked explicitly.
@@ -120,7 +121,7 @@ engine = [
     "js/engine/engine.js",
 ]
 externs = [env.File("#platform/web/js/engine/engine.externs.js")]
-js_engine = env.CreateEngineFile("#bin/godot${PROGSUFFIX}.engine.js", engine, externs, env["threads"])
+js_engine = env.CreateEngineFile("#bin/godot${PROGSUFFIX}.engine.js", engine, externs, methods.get_cmdline_bool("threads", False))
 env.Depends(js_engine, externs)
 
 wrap_list = [

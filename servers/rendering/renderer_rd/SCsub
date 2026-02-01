@@ -3,12 +3,13 @@ from misc.utility.scons_hints import *
 
 Import("env")
 
-env.add_source_files(env.servers_sources, "*.cpp")
+if "RD_ENABLED" in env["CPPDEFINES"]:
+    env.add_source_files(env.servers_sources, "*.cpp")
 
-SConscript("effects/SCsub")
-SConscript("environment/SCsub")
-SConscript("forward_clustered/SCsub")
-SConscript("forward_mobile/SCsub")
-SConscript("shaders/SCsub")
-SConscript("spirv-reflect/SCsub")
-SConscript("storage_rd/SCsub")
+    SConscript("effects/SCsub")
+    SConscript("environment/SCsub")
+    SConscript("forward_clustered/SCsub")
+    SConscript("forward_mobile/SCsub")
+    SConscript("shaders/SCsub")
+    SConscript("spirv-reflect/SCsub")
+    SConscript("storage_rd/SCsub")

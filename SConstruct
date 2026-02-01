@@ -184,7 +184,7 @@ opts.Add(
     )
 )
 opts.Add(BoolVariable("production", "Set defaults to build Godot for use in production", False))
-opts.Add(BoolVariable("threads", "Enable threading support", True))
+opts.Add(BoolVariable("use_fsr", "Enable FidelityFX Super Resolution (FSR) support", True))
 
 # Components
 opts.Add(BoolVariable("deprecated", "Enable compatibility code for deprecated and removed features", True))
@@ -1020,7 +1020,7 @@ if env["precision"] == "double":
 
 suffix += "." + env["arch"]
 
-if not env["threads"]:
+if not methods.get_cmdline_bool("threads", True):
     suffix += ".nothreads"
 
 suffix += env.extra_suffix
@@ -1069,6 +1069,8 @@ if env["minizip"]:
     env.Append(CPPDEFINES=["MINIZIP_ENABLED"])
 if env["brotli"]:
     env.Append(CPPDEFINES=["BROTLI_ENABLED"])
+if env["use_fsr"]:
+    env.Append(CPPDEFINES=["GLES3_USES_FSR"])
 
 if not env["disable_overrides"]:
     env.Append(CPPDEFINES=["OVERRIDE_ENABLED"])
@@ -1185,7 +1187,7 @@ if env["ninja"]:
     env.Tool("ninja", env["ninja_file"])
 
 # Threads
-if env["threads"]:
+if methods.get_cmdline_bool("threads", True):
     env.Append(CPPDEFINES=["THREADS_ENABLED"])
 
 # Ensure build objects are put in their own folder if `redirect_build_objects` is enabled.

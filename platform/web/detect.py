@@ -15,6 +15,7 @@ from emscripten_helpers import (
 )
 from SCons.Util import WhereIs
 
+import methods
 from methods import get_compiler_version, print_error, print_info, print_warning
 from platform_methods import validate_arch
 
@@ -247,7 +248,7 @@ def configure(env: "SConsEnvironment"):
     env.Prepend(CPPPATH=["#platform/web"])
     env.Append(CPPDEFINES=["WEB_ENABLED", "UNIX_ENABLED", "UNIX_SOCKET_UNAVAILABLE"])
 
-    if env["opengl3"]:
+    if methods.get_cmdline_bool("opengl3", True):
         env.AppendUnique(CPPDEFINES=["GLES3_ENABLED"])
         # This setting just makes WebGL 2 APIs available, it does NOT disable WebGL 1.
         env.Append(LINKFLAGS=["-sMAX_WEBGL_VERSION=2"])
@@ -257,12 +258,12 @@ def configure(env: "SConsEnvironment"):
         # See https://emscripten.org/docs/tools_reference/settings_reference.html#gl-enable-get-proc-address
         env.Append(LINKFLAGS=["-sGL_ENABLE_GET_PROC_ADDRESS=0"])
 
-    if env["javascript_eval"]:
+    if methods.get_cmdline_bool("javascript_eval", True):
         env.Append(CPPDEFINES=["JAVASCRIPT_EVAL_ENABLED"])
 
     env.Append(LINKFLAGS=["-s%s=%sKB" % ("STACK_SIZE", env["stack_size"])])
 
-    if env["threads"]:
+    if methods.get_cmdline_bool("threads", False):
         # Thread support (via SharedArrayBuffer).
         env.Append(CPPDEFINES=["PTHREAD_NO_RENAME"])
         env.Append(CCFLAGS=["-sUSE_PTHREADS=1"])
@@ -270,12 +271,12 @@ def configure(env: "SConsEnvironment"):
         env.Append(LINKFLAGS=["-sDEFAULT_PTHREAD_STACK_SIZE=%sKB" % env["default_pthread_stack_size"]])
         env.Append(LINKFLAGS=["-sPTHREAD_POOL_SIZE=\"Module['emscriptenPoolSize']||8\""])
         env.Append(LINKFLAGS=["-sWASM_MEM_MAX=2048MB"])
-        if not env["dlink_enabled"]:
+        if not methods.get_cmdline_bool("dlink_enabled", False):
             # Workaround https://github.com/emscripten-core/emscripten/issues/21844#issuecomment-2116936414.
             # Not needed (and potentially dangerous) when dlink_enabled=yes, since we set EXPORT_ALL=1 in that case.
             env["EXPORTED_FUNCTIONS"] += ["__emscripten_thread_crashed"]
 
-    elif env["proxy_to_pthread"]:
+    elif methods.get_cmdline_bool("proxy_to_pthread", False):
         print_warning('"threads=no" support requires "proxy_to_pthread=no", disabling proxy to pthread.')
         env["proxy_to_pthread"] = False
 
@@ -283,8 +284,8 @@ def configure(env: "SConsEnvironment"):
         # Workaround https://github.com/emscripten-core/emscripten/issues/16836.
         env.Append(LINKFLAGS=["-Wl,-u,_emscripten_run_callback_on_thread"])
 
-    if env["dlink_enabled"]:
-        if env["proxy_to_pthread"]:
+    if methods.get_cmdline_bool("dlink_enabled", False):
+        if methods.get_cmdline_bool("proxy_to_pthread", False):
             print_warning("GDExtension support requires proxy_to_pthread=no, disabling proxy to pthread.")
             env["proxy_to_pthread"] = False
 
@@ -298,7 +299,7 @@ def configure(env: "SConsEnvironment"):
     env.Append(LINKFLAGS=["-sWASM_BIGINT"])
 
     # Run the main application in a web worker
-    if env["proxy_to_pthread"]:
+    if methods.get_cmdline_bool("proxy_to_pthread", False):
         env.Append(LINKFLAGS=["-sPROXY_TO_PTHREAD=1"])
         env.Append(CPPDEFINES=["PROXY_TO_PTHREAD_ENABLED"])
         env["EXPORTED_RUNTIME_METHODS"] += ["_emscripten_proxy_main"]
@@ -306,7 +307,7 @@ def configure(env: "SConsEnvironment"):
         env.Append(LINKFLAGS=["-sTEXTDECODER=0"])
 
     # Enable WebAssembly SIMD
-    if env["wasm_simd"]:
+    if methods.get_cmdline_bool("wasm_simd", True):
         env.Append(CCFLAGS=["-msimd128"])
 
     # Reduce code size by generating less support code (e.g. skip NodeJS support).

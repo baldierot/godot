@@ -33,7 +33,9 @@
 #include "core/io/compression.h"
 
 #include "servers/rendering/renderer_rd/shader_rd.h"
+#ifdef RD_ENABLED
 #include "thirdparty/spirv-reflect/spirv_reflect.h"
+#endif
 
 static inline uint32_t aligned_to(uint32_t p_size, uint32_t p_alignment) {
 	if (p_size % p_alignment) {
@@ -57,19 +59,27 @@ void RenderingShaderContainer::ReflectSymbol<T>::set_spv_reflect(RDC::ShaderStag
 }
 
 RenderingShaderContainer::ReflectShaderStage::ReflectShaderStage() {
+#ifdef RD_ENABLED
 	_module = memnew(SpvReflectShaderModule);
 	memset(_module, 0, sizeof(SpvReflectShaderModule));
+#endif
 }
 
 RenderingShaderContainer::ReflectShaderStage::~ReflectShaderStage() {
-	spvReflectDestroyShaderModule(_module);
-	memdelete(_module);
-	_module = nullptr;
+#ifdef RD_ENABLED
+	if (_module) {
+		spvReflectDestroyShaderModule(_module);
+		memdelete(_module);
+		_module = nullptr;
+	}
+#endif
 }
 
+#ifdef RD_ENABLED
 const SpvReflectShaderModule &RenderingShaderContainer::ReflectShaderStage::module() const {
 	return *_module;
 }
+#endif
 
 const Span<uint32_t> RenderingShaderContainer::ReflectShaderStage::spirv() const {
 	return _spirv_data.span().reinterpret<uint32_t>();
@@ -135,6 +145,7 @@ uint32_t RenderingShaderContainer::_to_bytes_footer_extra_data(uint8_t *) const 
 	return 0;
 }
 
+#ifdef RD_ENABLED
 void RenderingShaderContainer::_set_from_shader_reflection_post(const ReflectShader &p_shader) {
 	// Do nothing.
 }
@@ -661,6 +672,7 @@ bool RenderingShaderContainer::set_code_from_spirv(const String &p_shader_name, 
 	ERR_FAIL_COND_V(reflect_spirv(p_shader_name, p_spirv, shader) != OK, false);
 	return _set_code_from_spirv(shader);
 }
+#endif
 
 RenderingDeviceCommons::ShaderReflection RenderingShaderContainer::get_shader_reflection() const {
 	RDC::ShaderReflection shader_refl;
@@ -775,7 +787,7 @@ bool RenderingShaderContainer::from_bytes(const PackedByteArray &p_bytes) {
 	reflection_specialization_data.resize(reflection_data.specialization_constants_count);
 	bytes_offset += _from_bytes_reflection_specialization_extra_data_start(&bytes_ptr[bytes_offset]);
 
-	for (uint32_t i = 0; i < reflection_data.specialization_constants_count; i++) {
+	for (uint32_t i = 0; i < reflection_specialization_data.size(); i++) {
 		ERR_FAIL_COND_V_MSG(int64_t(bytes_offset + sizeof(ReflectionSpecializationData)) > p_bytes.size(), false, "Not enough bytes for specialization in shader container.");
 		memcpy(&reflection_specialization_data.ptrw()[i], &bytes_ptr[bytes_offset], sizeof(ReflectionSpecializationData));
 		bytes_offset += sizeof(ReflectionSpecializationData);
@@ -792,7 +804,7 @@ bool RenderingShaderContainer::from_bytes(const PackedByteArray &p_bytes) {
 	}
 
 	// Read shaders.
-	for (int64_t i = 0; i < shaders.size(); i++) {
+	for (int i = 0; i < shaders.size(); i++) {
 		ERR_FAIL_COND_V_MSG(int64_t(bytes_offset + sizeof(ShaderHeader)) > p_bytes.size(), false, "Not enough bytes for shader header in shader container.");
 		const ShaderHeader &header = *(const ShaderHeader *)(&bytes_ptr[bytes_offset]);
 		bytes_offset += sizeof(ShaderHeader);

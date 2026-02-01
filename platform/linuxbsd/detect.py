@@ -3,6 +3,7 @@ import platform
 import sys
 from typing import TYPE_CHECKING
 
+import methods
 from methods import get_compiler_version, print_error, print_info, print_warning, using_gcc
 from platform_methods import detect_arch, validate_arch
 
@@ -349,7 +350,7 @@ def configure(env: "SConsEnvironment"):
         else:
             env.Append(CPPDEFINES=["PULSEAUDIO_ENABLED", "_REENTRANT"])
 
-    if env["dbus"] and env["threads"]:  # D-Bus functionality expects threads.
+    if env["dbus"] and methods.get_cmdline_bool("threads", True):  # D-Bus functionality expects threads.
         if not env["use_sowrap"]:
             if os.system("pkg-config --exists dbus-1") == 0:  # 0 means found
                 env.ParseConfig("pkg-config dbus-1 --cflags --libs")

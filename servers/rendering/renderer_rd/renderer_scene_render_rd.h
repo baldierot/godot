@@ -34,7 +34,10 @@
 #include "servers/rendering/renderer_rd/effects/bokeh_dof.h"
 #include "servers/rendering/renderer_rd/effects/copy_effects.h"
 #include "servers/rendering/renderer_rd/effects/debug_effects.h"
+#include "servers/rendering/renderer_rd/effects/spatial_upscaler.h"
+#ifdef GLES3_USES_FSR
 #include "servers/rendering/renderer_rd/effects/fsr.h"
+#endif
 #include "servers/rendering/renderer_rd/effects/luminance.h"
 #ifdef METAL_ENABLED
 #include "servers/rendering/renderer_rd/effects/metal_fx.h"
@@ -65,7 +68,9 @@ protected:
 	RendererRD::Luminance *luminance = nullptr;
 	RendererRD::SMAA *smaa = nullptr;
 	RendererRD::ToneMapper *tone_mapper = nullptr;
+#ifdef GLES3_USES_FSR
 	RendererRD::FSR *fsr = nullptr;
+#endif
 	RendererRD::VRS *vrs = nullptr;
 	RendererRD::Resolve *resolve_effects = nullptr;
 #ifdef METAL_ENABLED
