@@ -31,4 +31,4 @@ if [ "$TARGET" = "template_release" ]; then
 fi
 
 # The rest of the arguments are passed to scons
-scons platform=$PLATFORM target=$TARGET $DEBUG_SYMBOLS_FLAG optimize=custom ccflags="-Oz" linkflags="-Oz" cppdefines="SIZE_EXTRA" lto=none threads=$THREADS "$@"
+scons platform=$PLATFORM target=$TARGET $DEBUG_SYMBOLS_FLAG optimize=custom ccflags="-Oz" linkflags="-Oz" cppdefines="SIZE_EXTRA" lto=full threads=$THREADS "$@"
